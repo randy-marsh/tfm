@@ -3,7 +3,7 @@ import scipy.io
 import argparse
 import plotly.plotly
 import plotly.graph_objs
-
+import plotly.offline
 from typing import List, Dict
 
 
@@ -48,20 +48,6 @@ def read_mat(input_file: str) -> Dict:
     return scipy.io.loadmat(input_file)
 
 
-def parse_args():
-    """
-    Default arg parser
-    reads input and output path
-    """
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-i", "--input", type=str, help="input path",
-                        default="../../data/raw/Grupos_totales_continua.mat")
-    parser.add_argument("-o", "--output", type=str, help="output path",
-                        default="../../reports/figures/fog_distribution.html")
-    args = parser.parse_args()
-    return args
-
-
 def generate_histogram(data: List, output_file: str):
     """
     Creates a normalized histogram given input data
@@ -83,16 +69,30 @@ def generate_histogram(data: List, output_file: str):
         ),
     )
     fig = plotly.graph_objs.Figure(data=hist_data, layout=layout)
-    plotly.plotly.plot(fig, filename=output_file)
+    plotly.offline.plot(fig, filename=output_file)
 
 
-def main(input_path: str, ouptut_path: str):
+def parse_args():
+    """
+    Default arg parser
+    reads input and output path
+    """
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input_path", type=str, help="input path",
+                        default="../../data/raw/Grupos_totales_continua.mat")
+    parser.add_argument("-o", "--output_path", type=str, help="output path",
+                        default="../../reports/figures/fog_distribution.html")
+    args = parser.parse_args()
+    return vars(args)
+
+
+def main(input_path: str, output_path: str):
     """
     read input path, transforms data and generates and histogram
     """
     mat = read_mat(input_path)
-    fog_frequecies = fog_hour_frequencies()
-    generate_histogram(fog_frequecies, ouptut_path)
+    fog_frequecies = fog_hour_frequencies(mat)
+    generate_histogram(fog_frequecies, output_path)
 
 
 if __name__ == '__main__':
