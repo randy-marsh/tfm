@@ -17,7 +17,7 @@ def reduce_to_hours(df: pandas.DataFrame) -> List:
     # 0 is day, 1 is hours
     _df = df.copy().sort_values(by=[0, 1])
 
-    # loc valueswith fog
+    # loc values with fog
     _df.loc[:, 'fog'] = (_df[23] < 2000).astype(int)
 
     # create a dummy timestamp
@@ -52,12 +52,12 @@ def generate_histogram(data: List, output_file: str):
     """
     Creates a normalized histogram given input data
      * X axis: fog duration in hours
-     * Y axis: fog normalized frequency
+     * Y axis: fog  frequency
     :param List data: input data
     :param str output_file: place to save the visualization
     """
 
-    hist_data = [plotly.graph_objs.Histogram(x=data, histnorm='probability')]
+    hist_data = [plotly.graph_objs.Histogram(x=data)]
     # generate layout
     layout = plotly.graph_objs.Layout(
         title='Fog distribution',
@@ -65,14 +65,14 @@ def generate_histogram(data: List, output_file: str):
             title='Fog duration [Hours]'
         ),
         yaxis=dict(
-            title='Norm Count'
+            title='Count'
         ),
     )
     fig = plotly.graph_objs.Figure(data=hist_data, layout=layout)
     plotly.offline.plot(fig, filename=output_file)
 
 
-def parse_args():
+def parse_args() -> Dict:
     """
     Default arg parser
     reads input and output path
