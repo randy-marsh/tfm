@@ -1,6 +1,7 @@
 import pandas
 import numpy
 import sklearn.decomposition
+import tsfresh
 from typing import Iterator, Generator
 
 
@@ -62,6 +63,12 @@ def id_generator() -> Iterator[int]:
             yield id
             id += 1
 
+def extract_characteristics_from_sequences(df: pandas.DataFrame) -> pandas.DataFrame:
+    """
+
+    """
+    # TODO reduce extracted features, see impute or features dict
+    return tsfresh.extract_features(df, column_id='id', column_sort='time')
 
 
 
