@@ -6,6 +6,8 @@ import plotly.graph_objs
 import plotly.offline
 from typing import List, Dict
 
+import src.utils.commons
+
 
 def reduce_to_hours(df: pandas.DataFrame) -> List:
     """
@@ -37,15 +39,6 @@ def fog_hour_frequencies(mat) -> List:
         vector = reduce_to_hours(df)
         fogfreq.extend(vector)
     return fogfreq
-
-
-def read_mat(input_file: str) -> Dict:
-    """
-    Reads a mat file descriptor a returns a dict
-    :param str input_file: file path
-    :return Dict: dict representation of the mat file
-    """
-    return scipy.io.loadmat(input_file)
 
 
 def generate_histogram(data: List, output_file: str):
@@ -90,7 +83,7 @@ def main(input_path: str, output_path: str):
     """
     read input path, transforms data and generates and histogram
     """
-    mat = read_mat(input_path)
+    mat = src.utils.commons.read_mat(input_path)
     fog_frequecies = fog_hour_frequencies(mat)
     generate_histogram(fog_frequecies, output_path)
 
