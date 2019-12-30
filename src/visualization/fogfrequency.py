@@ -1,9 +1,10 @@
 import pandas
-import scipy.io
 import argparse
+import os
 import plotly.plotly
 import plotly.graph_objs
 import plotly.offline
+
 from typing import List, Dict
 
 import src.utils.commons
@@ -85,6 +86,8 @@ def main(input_path: str, output_path: str):
     """
     mat = src.utils.commons.read_mat(input_path)
     fog_frequecies = fog_hour_frequencies(mat)
+    if not os.path.exists(os.path.dirname(output_path)):
+        os.makedirs(os.path.dirname(output_path))
     generate_histogram(fog_frequecies, output_path)
 
 
