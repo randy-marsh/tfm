@@ -108,20 +108,24 @@ def valid_fog_events(df: pandas.DataFrame, min_fog_event_length: int, max_fog_ev
 #         return pandas.concat(acumulated_sequences, ignore_index=True)
 
 
-def extract_sequences(df: pandas.DataFrame, window_length: int, id_generator: Generator, pca_model) -> pandas.DataFrame:
+def extract_sequences(df: pandas.DataFrame, fog_events_df: pandas.DataFrame, window_length: int,
+                      id_generator: Generator) -> pandas.DataFrame:
     """
     Extract sequences of window_length from fog events greater than fog_event_lenght
     """
+    # TODO is really necessary the pca inside this?
 
 
-    # transform the dataset
-    _df = pandas.DataFrame(pca_model.transform(df.copy().loc[:, [column for column in df.columns
-                                                                 if column not in [0, 1, 23, 'fog',
-                                                                                   'time', 'groups']]]))
+    # # transform the dataset
+    # _df = pandas.DataFrame(pca_model.transform(df.copy().loc[:, [column for column in df.columns
+    #                                                              if column not in [0, 1, 23, 'fog',
+    #                                                                                'time', 'groups']]]))
     # get indexes
-    _index = _df.index
+    _index = df.index
+
     # get window_length before the fog event
-    sequence = _df.loc[pandas.RangeIndex(_index[0] - (window_length - 1), _index[-1])]
+    sequence = fog_events_df.loc[pandas.RangeIndex(_index[0] - window_length, _index[0])]
+
     # add a time index
     sequence.loc[:, 'time'] = sequence.reset_index().index
     # TODO this is not he optimal way to do it
@@ -147,6 +151,7 @@ def extract_sequences(df: pandas.DataFrame, window_length: int, id_generator: Ge
 
 def extract_labels(df: pandas.DataFrame) -> pandas.DataFrame:
     # y is the minimum RVR in the fog event
+    # TODO this should be a function?
     y = df[23].min()
     return y
 
