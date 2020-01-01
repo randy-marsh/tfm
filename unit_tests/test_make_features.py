@@ -47,6 +47,7 @@ class TestIdentifyFogEvents(unittest.TestCase):
         output_df = src.features.make_features.identify_log_events(input_df)
         self.assertTrue(['fog', 'time'] not in output_df.columns.tolist())
 
+
 class TestExtractSequences(unittest.TestCase):
     def setUp(self) -> None:
         self.fog_df = pandas.DataFrame({0: numpy.random.randint(10, size=100),
@@ -112,6 +113,75 @@ class TestVRVFirstFogEvent(unittest.TestCase):
     def test_that_if_minimun_is_not_first_then_returns_True(self):
         input_df = pandas.DataFrame({23: [2000, 1000, 2000, 2000, 2000]})
         self.assertTrue(src.features.make_features.is_vrv_min_at_first_fog_event(input_df))
+
+
+class TestGetFogEvents(unittest.TestCase):
+    def setUp(self) -> None:
+        self.input_df = pandas.DataFrame({'groups': [numpy.nan, 0, 0, numpy.nan, 1]})
+
+    def test_that_if_input_has_nan_then_output_groups_does_not_have_nan(self):
+        out_list = src.features.make_features.get_fog_events(self.input_df)
+        self.assertFalse(numpy.isnan(out_list).any())
+
+    def test_that_output_has_all_input_groups(self):
+        out_list = src.features.make_features.get_fog_events(self.input_df)
+        self.assertEqual([0, 1], out_list)
+
+    def test_that_output_values_are_not_duplicated(self):
+        out_list = src.features.make_features.get_fog_events(self.input_df)
+        self.assertEqual(list(set(out_list)), [0, 1])
+
+
+class TestIdGenerator(unittest.TestCase):
+    def setUp(self) -> None:
+        self.generator = src.features.make_features.id_generator()
+
+    def test_that_generator_start_in_zero(self):
+        self.assertTrue(next(self.generator) == 0)
+
+    def test_that_generator_increases_by_one(self):
+        # obtain another value greater than zero
+        next(self.generator)
+        first_value = next(self.generator)
+        last_value = next(self.generator)
+        self.assertTrue((last_value - first_value) == 1)
+
+
+class TestValidFogEventsGenerator(unittest.TestCase):
+    def setUp(self) -> None:
+        self.input_df = pandas.DataFrame({23: [1900, 1000] + [1000, 1900, 1900] + [1900 for value in range(4)] + [1000],
+                                         'groups': [0, 0, 1, 1, 1, 2, 2, 2, 2, 2]})
+
+    def test_that_output_groups_are_valid(self):
+        groups = list()
+        for group in src.features.make_features.valid_fog_events(self.input_df, min_fog_event_length=3,
+                                                                 max_fog_event_length=5, first_vrv=False):
+            groups.append(group)
+        self.assertEqual([1000, 1900, 1900], groups[0][23].tolist())
+
+    def test_that_output_contains_groups_greater_than_min_fog_event_length(self):
+        groups = list()
+        for group in src.features.make_features.valid_fog_events(self.input_df, min_fog_event_length=3,
+                                                                 max_fog_event_length=None, first_vrv=False):
+
+            groups.append(group)
+        self.assertEqual(len(groups), 2)
+
+    def test_that_output_not_contains_groups_greater_than_max_fog_event_length_when_max_param_is_not_none(self):
+        groups = list()
+        for group in src.features.make_features.valid_fog_events(self.input_df, min_fog_event_length=3,
+                                                                 max_fog_event_length=5, first_vrv=False):
+            groups.append(group)
+        self.assertEqual(len(groups), 1)
+
+    def test_that_if_first_rvr_is_true_then_there_are_no_groups_starts_with_vrv_min(self):
+        groups = list()
+        for group in src.features.make_features.valid_fog_events(self.input_df, min_fog_event_length=3,
+                                                                 max_fog_event_length=None, first_vrv=True):
+            groups.append(group)
+        self.assertEqual(len(groups), 1)
+
+
 
 if __name__ == '__main__':
     unittest.main()

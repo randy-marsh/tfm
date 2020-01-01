@@ -66,14 +66,17 @@ def valid_fog_events(df: pandas.DataFrame, min_fog_event_length: int, max_fog_ev
         fog_event_df = df.loc[df['groups'] == fog_event]
         if len(fog_event_df) >= min_fog_event_length:
             if max_fog_event_length is not None:
-                if len(fog_event_df) >= max_fog_event_length:
+                if len(fog_event_df) < max_fog_event_length:
                     if first_vrv:
                         if is_vrv_min_at_first_fog_event(fog_event_df):
                             yield fog_event_df
-            if first_vrv:
+                    else:
+                        yield fog_event_df
+            elif first_vrv:
                 if is_vrv_min_at_first_fog_event(fog_event_df):
                     yield fog_event_df
-            yield fog_event_df
+            else:
+                yield fog_event_df
 
 
 # def extract_sequences(df: pandas.DataFrame, window_length: int, min_fog_event_length: int,
