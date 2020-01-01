@@ -36,8 +36,8 @@ def identify_log_events(df: pandas.DataFrame) -> pandas.DataFrame:
 def is_vrv_min_at_first_fog_event(df: pandas.DataFrame) -> pandas.DataFrame:
     """
     """
-    min_rvr = df['groups'].min()
-    first_rvr = df.iloc[0]['groups']
+    min_rvr = df[23].min()
+    first_rvr = df.iloc[0][23]
     if min_rvr == first_rvr:
         return False
     else:

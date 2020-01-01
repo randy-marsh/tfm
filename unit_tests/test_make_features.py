@@ -51,10 +51,15 @@ class TestExtractSequences(unittest.TestCase):
     def setUp(self) -> None:
         self.fog_df = pandas.DataFrame({0: numpy.random.randint(10, size=100),
                                         1: numpy.random.randint(20, size=100)})
-        self.input_df = self.fog_df[20:25]
+        self.input_df = self.fog_df.iloc[20:25]
+
+    def test_that_output_dataframe_is_as_subset_from_fog_events_df(self):
+        output_df = src.features.make_features.extract_sequences(self.input_df, self.fog_df, window_length=11,
+                                                                 id_generator=src.features.make_features.id_generator())
+
+        self.assertTrue(output_df.loc[:, [0, 1]].equals(self.fog_df.iloc[9:20]))
 
     def test_that_output_sequence_has_window_lenght(self):
-
         output_df = src.features.make_features.extract_sequences(self.input_df, self.fog_df, window_length=11,
                                                                  id_generator=src.features.make_features.id_generator())
         self.assertEqual(len(output_df), 11)
@@ -85,12 +90,28 @@ class TestExtractSequences(unittest.TestCase):
                                                                  id_generator=src.features.make_features.id_generator())
         self.assertEqual(output_df['time'].unique().tolist(), list(range(10)))
 
+
 class TestExtractLabels(unittest.TestCase):
     def test_that_output_contains_the_minimum_value(self):
-        input_df = pandas.DataFrame({23: numpy.random.randint(0, 10, size=10) + numpy.array(-10)})
+        input_df = pandas.DataFrame({23: numpy.random.randint(0, 10, size=10).tolist() + [-100]})
         out = src.features.make_features.extract_labels(input_df)
-        self.assertEqual(out, -10)
+        self.assertEqual(out, -100)
 
-    
+    def test_that_if_there_are_two_minimum_then_only_returns_one(self):
+        input_df = pandas.DataFrame({23: numpy.random.randint(0, 10, size=10).tolist() + [-100., -100.]})
+        out = src.features.make_features.extract_labels(input_df)
+        with self.assertRaises(TypeError):
+            len(out)
+
+
+class TestVRVFirstFogEvent(unittest.TestCase):
+    def test_that_if_minimun_is_first_then_returns_false(self):
+        input_df = pandas.DataFrame({23: [1000, 1999, 2000, 1999, 1999]})
+        self.assertFalse(src.features.make_features.is_vrv_min_at_first_fog_event(input_df))
+
+    def test_that_if_minimun_is_not_first_then_returns_True(self):
+        input_df = pandas.DataFrame({23: [2000, 1000, 2000, 2000, 2000]})
+        self.assertTrue(src.features.make_features.is_vrv_min_at_first_fog_event(input_df))
+
 if __name__ == '__main__':
     unittest.main()
