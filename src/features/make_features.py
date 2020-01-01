@@ -1,6 +1,5 @@
 import pandas
 import numpy
-import scipy.io
 import os
 import argparse
 import sklearn.decomposition
@@ -64,6 +63,7 @@ def valid_fog_events(df: pandas.DataFrame, min_fog_event_length: int, max_fog_ev
     fog_events = get_fog_events(df)
     for fog_event in fog_events:
         fog_event_df = df.loc[df['groups'] == fog_event]
+        fog_event_df = fog_event_df.loc[:, [column for column in fog_event_df.columns if column != 'groups']]
         if len(fog_event_df) >= min_fog_event_length:
             if max_fog_event_length is not None:
                 if len(fog_event_df) < max_fog_event_length:
@@ -79,56 +79,19 @@ def valid_fog_events(df: pandas.DataFrame, min_fog_event_length: int, max_fog_ev
                 yield fog_event_df
 
 
-# def extract_sequences(df: pandas.DataFrame, window_length: int, min_fog_event_length: int,
-#                       max_window_length: int or None, first_vrv: bool,
-#                       id_generator: Generator, pca_model) -> pandas.DataFrame:
-#     """
-#     Extract sequences of window_length from fog events greater than fog_event_lenght
-#     """
-#     # get number of events
-#
-#     acumulated_sequences = []
-#     for fog_event in valid_fog_events():
-#         if len(df.loc[df['groups'] == fog_event]) >= fog_event_length:
-#
-#             # get indexes
-#             _index = df.loc[df['groups'] == fog_event].index
-#             # transform the dataset
-#             _df = pandas.DataFrame(pca_model.transform(df.copy().loc[:, [column for column in df.columns
-#                                                                          if column not in [0, 1, 23, 'fog',
-#                                                                                            'time', 'groups']]]))
-#             # get window_length before the fog event
-#             sequence = _df.loc[pandas.RangeIndex(_index[0] - (window_length - 1), _index[-1])]
-#
-#             # add a time index
-#             sequence.loc[:, 'time'] = sequence.reset_index().index
-#             # TODO this is not he optimal way to do it
-#             sequence.loc[:, 'id'] = next(id_generator)
-#             acumulated_sequences.append(sequence)
-#     if len(acumulated_sequences) is 0:
-#         return None
-#     else:
-#         return pandas.concat(acumulated_sequences, ignore_index=True)
-
-
 def extract_sequences(df: pandas.DataFrame, fog_events_df: pandas.DataFrame, window_length: int,
                       id_generator: Generator) -> pandas.DataFrame:
     """
     Extract sequences of window_length from fog events greater than fog_event_lenght
     """
-    # TODO is really necessary the pca inside this?
-
-
-    # # transform the dataset
-    # _df = pandas.DataFrame(pca_model.transform(df.copy().loc[:, [column for column in df.columns
-    #                                                              if column not in [0, 1, 23, 'fog',
-    #                                                                                'time', 'groups']]]))
     # get indexes
     _index = df.index
 
     # get window_length before the fog event
     sequence = fog_events_df.loc[pandas.RangeIndex(_index[0] - window_length, _index[0])]
 
+    # remove column 'groups'
+    sequence = sequence.loc[:, [column for column in sequence.columns if column != 'groups']]
     # add a time index
     sequence.loc[:, 'time'] = sequence.reset_index().index
     # TODO this is not he optimal way to do it
@@ -136,29 +99,26 @@ def extract_sequences(df: pandas.DataFrame, fog_events_df: pandas.DataFrame, win
     return sequence
 
 
-# def extract_labels(df: pandas.DataFrame, fog_event_lenght) -> pandas.DataFrame:
-#     # get number of events
-#     unique_fog_events_labels = df['groups'].unique()
-#     fog_events = unique_fog_events_labels[~numpy.isnan(unique_fog_events_labels)]
-#     acumulated_labels = list()
-#     # TODO reformat this function b
-#     for fog_event in fog_events:
-#         group_df = df.loc[df['groups'] == fog_event]
-#         if len(group_df) >= fog_event_lenght:
-#
-#             # y is the minimum RVR in the fog event
-#             y = group_df[23].min()
-#             acumulated_labels.append(y)
-#     return acumulated_labels
-#
-
-def extract_labels(df: pandas.DataFrame) -> pandas.DataFrame:
+def extract_labels(df: pandas.DataFrame) -> int or float:
+    """
+    Get minimum RVR from input DataFrame
+    :param pandas.DataFrame df: input DataFrame should contain a column named 23
+    :return int: minimum RVR value
+    """
     # y is the minimum RVR in the fog event
     # TODO this should be a function?
     y = df[23].min()
     return y
 
 
+def get_first_vrv(df: pandas.DataFrame) -> int:
+    """
+    Get first RVR from input DataFrame
+    :param pandas.DataFrame df: input DataFrame should contain a column named 23
+    :return int: first RVR value
+    """
+    first_rvr = df.iloc[0][23]
+    return first_rvr
 
 
 def id_generator() -> Iterator[int]:
@@ -193,43 +153,6 @@ def parse_args() -> Dict:
     return vars(args)
 
 
-# def main(input_path: str, output_path: str):
-#     """
-#     read input path, transforms data and generates features
-#     """
-#     # generator used to iterate over the dataset
-#     generator = id_generator()
-#
-#     all_sequences = list()
-#     labels = list()
-#     settings = tsfresh.feature_extraction.settings.MinimalFCParameters()
-#     mat = src.utils.commons.read_mat(input_path)
-#     datasets = src.utils.commons.concat_dataset(mat)
-#     # TODO generate a representative sample
-#     pca = sklearn.decomposition.PCA(n_components=4)
-#     pca.fit(datasets.loc[:, [column for column in datasets.columns
-#                              if column not in [0, 1, 23]]])
-#     for dataset in src.utils.commons.dataset_generator(mat):
-#         dataset_with_fog_events = identify_log_events(dataset)
-#         labels.extend(extract_labels(dataset_with_fog_events, fog_event_lenght=2))
-#         dataset_sequences = extract_sequences(dataset_with_fog_events, window_length=10, fog_event_length=2,
-#                                               id_generator=generator, pca_model=pca)
-#         all_sequences.append(dataset_sequences)
-#
-#
-#     # generate a single DataFrame with all the sequences
-#     datasets_sequences = pandas.concat(all_sequences, ignore_index=False)
-#
-#     datasets_features = extract_characteristics_from_sequences(datasets_sequences.dropna(), settings=settings)
-#
-#     # add labels to dataset
-#     datasets_features.loc[:, 'y'] = labels
-#     if not os.path.exists(output_path):
-#         os.makedirs(output_path)
-#     datasets_features.to_csv(output_path + 'features.csv', sep=';', index=True)
-#
-#     # TODO generate labels
-
 def main(input_path: str, output_path: str):
     """
     read input path, transforms data and generates features
@@ -239,6 +162,7 @@ def main(input_path: str, output_path: str):
 
     all_sequences = list()
     labels = list()
+    vrv = list()
     settings = tsfresh.feature_extraction.settings.MinimalFCParameters()
     mat = src.utils.commons.read_mat(input_path)
     datasets = src.utils.commons.concat_dataset(mat)
@@ -252,24 +176,44 @@ def main(input_path: str, output_path: str):
     for dataset in src.utils.commons.dataset_generator(mat):
         dataset_with_fog_events = identify_log_events(dataset)
 
+        # apply pca
+        fog_events_reduced = pandas.DataFrame(pca.transform(dataset_with_fog_events.loc[:,
+                                                            [column for column in dataset_with_fog_events.columns
+                                                             if column not in [23, 'time', 'id', 'groups']]]),
+                                              index=dataset_with_fog_events.index)
         # loop over the groups
         for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=2, max_fog_event_length=None,
                                           first_vrv=False):
 
-            labels.append(extract_labels(fog_event))
-            sequences = extract_sequences(fog_event, window_length=10, id_generator=generator, pca_model=pca)
+            # get sequences
+            sequences = extract_sequences(fog_event, fog_events_df=fog_events_reduced,
+                                          window_length=10, id_generator=generator)
             all_sequences.append(sequences)
+
+            # get y labels
+            labels.append(extract_labels(fog_event))
+
+            # get first vrv
+            vrv.append(get_first_vrv(fog_event))
 
     # generate a single DataFrame with all the sequences
     datasets_sequences = pandas.concat(all_sequences, ignore_index=False)
 
+    # extract features
     datasets_features = extract_characteristics_from_sequences(datasets_sequences.dropna(), settings=settings)
 
     # add labels to dataset
     datasets_features.loc[:, 'y'] = labels
+
+    # add vrv to dataset
+    datasets_features.loc[:, 'vrv'] = vrv
+
+    # remove the mean
+    datasets_features.loc[:, 'vrv'] = datasets_features['vrv'] - datasets_features['vrv'].mean()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    datasets_features.to_csv(output_path + 'features.csv', sep=';', index=True)
+    datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
+    # datasets_sequences.to_csv(output_path + 'features.csv', sep=';', index=False)
 
 
 if __name__ == '__main__':

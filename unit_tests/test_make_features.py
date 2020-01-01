@@ -182,6 +182,12 @@ class TestValidFogEventsGenerator(unittest.TestCase):
         self.assertEqual(len(groups), 1)
 
 
+class TestGetFirstVRV(unittest.TestCase):
+    def test_that_returns_first_vrv_value(self):
+        input_df = pandas.DataFrame({23: [1234, 1954, 1954, 1954]})
+        out = src.features.make_features.get_first_vrv(input_df)
+        self.assertEqual(out, 1234)
+
 
 if __name__ == '__main__':
     unittest.main()
