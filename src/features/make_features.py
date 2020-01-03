@@ -6,6 +6,7 @@ import sklearn.decomposition
 import sklearn.model_selection
 import tsfresh
 import tsfresh.feature_extraction.settings
+import tsfresh.utilities.dataframe_functions
 from typing import Iterator, Generator, Dict, List
 
 import src.utils.commons
@@ -136,7 +137,10 @@ def extract_characteristics_from_sequences(df: pandas.DataFrame, settings) -> pa
 
     """
     # TODO reduce extracted features, see impute or features dict
-    return tsfresh.extract_features(df, column_id='id', column_sort='time', default_fc_parameters=settings)
+    extracted_features = tsfresh.extract_features(df, column_id='id', column_sort='time',
+                                                   default_fc_parameters=settings)
+    tsfresh.utilities.dataframe_functions.impute(extracted_features)
+    return extracted_features
 
 
 def parse_args() -> Dict:
@@ -163,7 +167,9 @@ def main(input_path: str, output_path: str):
     all_sequences = list()
     labels = list()
     vrv = list()
-    settings = tsfresh.feature_extraction.settings.MinimalFCParameters()
+    # settings = tsfresh.feature_extraction.settings.MinimalFCParameters()
+    settings = tsfresh.feature_extraction.settings.ComprehensiveFCParameters()
+    # settings = tsfresh.feature_extraction.settings.EfficientFCParameters()
     mat = src.utils.commons.read_mat(input_path)
     datasets = src.utils.commons.concat_dataset(mat)
     # TODO generate a representative sample
@@ -172,6 +178,7 @@ def main(input_path: str, output_path: str):
     # fit pca model
     pca.fit(datasets.loc[:, [column for column in datasets.columns
                              if column not in [0, 1, 23]]])
+
     # loop over the datasets
     for dataset in src.utils.commons.dataset_generator(mat):
         dataset_with_fog_events = identify_log_events(dataset)
@@ -182,7 +189,7 @@ def main(input_path: str, output_path: str):
                                                              if column not in [23, 'time', 'id', 'groups']]]),
                                               index=dataset_with_fog_events.index)
         # loop over the groups
-        for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=2, max_fog_event_length=None,
+        for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=2, max_fog_event_length=33,
                                           first_vrv=False):
 
             # get sequences
