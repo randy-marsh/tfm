@@ -136,7 +136,7 @@ def extract_labels(df: pandas.DataFrame, input_path) -> int or float:
     return y
 
 
-def get_first_vrv(df: pandas.DataFrame, input_path) -> int:
+def get_first_rvr(df: pandas.DataFrame, input_path) -> int:
     """
     Get first RVR from input DataFrame
     :param pandas.DataFrame df: input DataFrame should contain a column named 23
@@ -261,7 +261,7 @@ def main(input_path: str, output_path: str):
             labels.append(extract_labels(fog_event, input_path))
 
             # get first vrv
-            vrv.append(get_first_vrv(fog_event, input_path))
+            vrv.append(get_first_rvr(fog_event, input_path))
             # get exogen values
             exogen_values.append(get_exogen_values(fog_event))
 
