@@ -180,8 +180,8 @@ class TestValidFogEventsGenerator(unittest.TestCase):
 
 class TestGetFirstRVR(unittest.TestCase):
     def test_that_returns_first_rvr_value(self):
-        input_df = pandas.DataFrame({23: [1234, 1954, 1954, 1954]})
-        out = src.features.make_features.get_first_rvr(input_df, "Grupos_totales_continua")
+        input_df = pandas.DataFrame({'rvr': [1234, 1954, 1954, 1954]})
+        out = src.features.make_features.get_first_rvr(input_df)
         self.assertEqual(out, 1234)
 
 

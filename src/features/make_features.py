@@ -124,16 +124,14 @@ def extract_labels(df: pandas.DataFrame) -> float:
     return y
 
 
-def get_first_rvr(df: pandas.DataFrame, input_path) -> int:
+def get_first_rvr(df: pandas.DataFrame) -> int:
     """
     Get first RVR from input DataFrame
     :param pandas.DataFrame df: input DataFrame should contain a column named 23
     :return int: first RVR value
     """
-    if pathlib.Path(input_path).name == "Grupos_totales_continua":
-        first_rvr = df.iloc[0][23]
-    else:
-        first_rvr = df.iloc[0][2]
+
+    first_rvr = df.iloc[0]['rvr']
     return first_rvr
 
 
