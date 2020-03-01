@@ -90,12 +90,12 @@ class TestExtractSequences(unittest.TestCase):
 
 class TestExtractLabels(unittest.TestCase):
     def test_that_output_contains_the_minimum_value(self):
-        input_df = pandas.DataFrame({23: numpy.random.randint(0, 10, size=10).tolist() + [-100]})
+        input_df = pandas.DataFrame({'rvr': numpy.random.randint(0, 10, size=10).tolist() + [-100]})
         out = src.features.make_features.extract_labels(input_df)
         self.assertEqual(out, -100)
 
     def test_that_if_there_are_two_minimum_then_only_returns_one(self):
-        input_df = pandas.DataFrame({23: numpy.random.randint(0, 10, size=10).tolist() + [-100., -100.]})
+        input_df = pandas.DataFrame({'rvr': numpy.random.randint(0, 10, size=10).tolist() + [-100., -100.]})
         out = src.features.make_features.extract_labels(input_df)
         with self.assertRaises(TypeError):
             len(out)

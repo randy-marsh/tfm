@@ -112,18 +112,15 @@ def extract_sequences(df: pandas.DataFrame, fog_events_df: pandas.DataFrame, win
     return sequence
 
 
-def extract_labels(df: pandas.DataFrame, input_path) -> int or float:
+def extract_labels(df: pandas.DataFrame) -> float:
     """
     Get minimum RVR from input DataFrame
     :param pandas.DataFrame df: input DataFrame should contain a column named 23
-    :return int: minimum RVR value
+    :return float: minimum RVR value
     """
     # y is the minimum RVR in the fog event
     # TODO this should be a function?
-    if pathlib.Path(input_path).name == "Grupos_totales_continua":
-        y = df[23].min()
-    else:
-        y = df[2].min()
+    y = df['rvr'].min()
     return y
 
 
