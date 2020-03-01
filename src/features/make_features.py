@@ -13,38 +13,27 @@ import pathlib
 import src.utils.commons
 
 
-def identify_log_events(df: pandas.DataFrame, input_path: str) -> pandas.DataFrame:
+def identify_log_events(df: pandas.DataFrame) -> pandas.DataFrame:
     """
-    Given an input DataFrame identify the fog by hour frequencies
-    :param pandas.DataFrame df: input DataFrame it should contain day, hour and RVR values
+    Given an input DataFrame identify the fog by hour frequencies, it asumes that the input dataframe is
+    sorted by time and has a column called 'rvr'
+    :param pandas.DataFrame df: input DataFrame it rvr values
     :return pandas.DataFrame df: DataFrame with an extra column 'groups' with the fog-events labeled
     """
     # do this to avoid modifying the original dataframe
     df = df.copy(deep=True)
-    if pathlib.Path(input_path).name == "Grupos_totales_continua":
-        # loc values with fog column 23 is RVR
-        df.loc[:, 'fog'] = (df[23] < 2000).astype(int)
 
-        # create a dummy timestamp
-        # df.loc[:, 'time'] = df[0] * 24 + df[1]
-        # create a dummy timestamp
-        df.loc[:, 'time'] = df.index
-        # identify consecutive fog events and generates a unique label
-        df.loc[:, 'groups'] = df.loc[df['fog'] == 1, 'time'].diff().ge(1.5).cumsum()
-        # df.loc[:, 'groups'] = df.loc[df['fog'] == 1].diff().ge(1.5).cumsum()
-        # TODO think about return just a series rather than a whole dataframe or part of it
+    # loc values with fog column rvr
+    df.loc[:, 'fog'] = (df['rvr'] < 2000).astype(int)
 
-    else:
-        # loc values with fog column 23 is RVR
-        df.loc[:, 'fog'] = (df[2] < 2000).astype(int)
-        # create a dummy timestamp
-        df.loc[:, 'time'] = df.index
+    # create a dummy timestamp
+    df.loc[:, 'time'] = df.index
 
-        # identify consecutive fog events and generates a unique label
-        df.loc[:, 'groups'] = df.loc[df['fog'] == 1, 'time'].diff().ge(1.5).cumsum()
-
+    # identify consecutive fog events and generates a unique label
+    df.loc[:, 'groups'] = df.loc[df['fog'] == 1, 'time'].diff().ge(1.5).cumsum()
+    # TODO think about return just a series rather than a whole dataframe or part of it
     # return everything but time vars
-    return df.loc[:, [column for column in df.columns if column not in [0, 1, 'fog', 'time']]]
+    return df.loc[:, [column for column in df.columns if column not in ['fog', 'time']]]
 
 
 def is_rvr_min_at_first_fog_event(df: pandas.DataFrame) -> pandas.DataFrame:
