@@ -137,10 +137,12 @@ def get_first_rvr(df: pandas.DataFrame) -> int:
 
 def get_exogen_values(df: pandas.DataFrame) -> pandas.DataFrame:
     """
-    Extract exogen vars last values
+    Extract exogen vars first values
+    :param pandas.DataFrame df: input dataframe
+    :return pandas.Dataframe: dataframe with one roe but rvr values
     """
     out = df.head(1)
-    return out.loc[:, [column for column in out.columns if column != 23]]
+    return out.loc[:, [column for column in out.columns if column != 'rvr']]
 
 
 def id_generator() -> Iterator[int]:
