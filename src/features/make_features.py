@@ -42,8 +42,8 @@ def is_rvr_min_at_first_fog_event(df: pandas.DataFrame) -> pandas.DataFrame:
     :return: True if first rvr is not the first one, False otherwise
     """
     # TODO check the input
-    min_rvr = df[23].min()
-    first_rvr = df.iloc[0][23]
+    min_rvr = df['rvr'].min()
+    first_rvr = df.iloc[0]['rvr']
     if min_rvr == first_rvr:
         return False
     else:
