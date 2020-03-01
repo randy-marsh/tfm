@@ -26,10 +26,12 @@ def identify_log_events(df: pandas.DataFrame, input_path: str) -> pandas.DataFra
         df.loc[:, 'fog'] = (df[23] < 2000).astype(int)
 
         # create a dummy timestamp
-        df.loc[:, 'time'] = df[0] * 24 + df[1]
-
+        # df.loc[:, 'time'] = df[0] * 24 + df[1]
+        # create a dummy timestamp
+        df.loc[:, 'time'] = df.index
         # identify consecutive fog events and generates a unique label
         df.loc[:, 'groups'] = df.loc[df['fog'] == 1, 'time'].diff().ge(1.5).cumsum()
+        # df.loc[:, 'groups'] = df.loc[df['fog'] == 1].diff().ge(1.5).cumsum()
         # TODO think about return just a series rather than a whole dataframe or part of it
 
     else:
@@ -45,7 +47,7 @@ def identify_log_events(df: pandas.DataFrame, input_path: str) -> pandas.DataFra
     return df.loc[:, [column for column in df.columns if column not in [0, 1, 'fog', 'time']]]
 
 
-def is_vrv_min_at_first_fog_event(df: pandas.DataFrame) -> pandas.DataFrame:
+def is_rvr_min_at_first_fog_event(df: pandas.DataFrame) -> pandas.DataFrame:
     """
     Check whether minimum rvr is the first one or not
     :return: True if first rvr is not the first one, False otherwise
@@ -70,13 +72,13 @@ def get_fog_events(df: pandas.DataFrame) -> List:
 
 
 def valid_fog_events(df: pandas.DataFrame, min_fog_event_length: int, max_fog_event_length: int or None,
-                     first_vrv: bool):
+                     first_rvr: bool):
     """
     Yields valid fog_events in input DataFrame given params
     :param pandas.DataFrame df: dataframe with identified fog events
     :param min_fog_event_length: fog event minimum length to filter by
     :param max_fog_event_length: fog event maximum length to filter by
-    :param first_vrv: filter out fog events that its minimum matches the first rvr value
+    :param first_rvr: filter out fog events that its minimum matches the first rvr value
     """
     # sanity check
     if max_fog_event_length is not None:
@@ -89,13 +91,13 @@ def valid_fog_events(df: pandas.DataFrame, min_fog_event_length: int, max_fog_ev
         if len(fog_event_df) >= min_fog_event_length:
             if max_fog_event_length is not None:
                 if len(fog_event_df) < max_fog_event_length:
-                    if first_vrv:
-                        if is_vrv_min_at_first_fog_event(fog_event_df):
+                    if first_rvr:
+                        if is_rvr_min_at_first_fog_event(fog_event_df):
                             yield fog_event_df
                     else:
                         yield fog_event_df
-            elif first_vrv:
-                if is_vrv_min_at_first_fog_event(fog_event_df):
+            elif first_rvr:
+                if is_rvr_min_at_first_fog_event(fog_event_df):
                     yield fog_event_df
             else:
                 yield fog_event_df
@@ -222,7 +224,7 @@ def main(input_path: str, output_path: str):
 
     all_sequences = list()
     labels = list()
-    vrv = list()
+    rvr = list()
     exogen_values = list()
     settings = tsfresh.feature_extraction.settings.MinimalFCParameters()
     # settings = tsfresh.feature_extraction.settings.ComprehensiveFCParameters()
@@ -230,7 +232,7 @@ def main(input_path: str, output_path: str):
     mat = src.utils.commons.read_mat(input_path)
     # datasets = src.utils.commons.concat_dataset(mat)
     # TODO generate a representative sample
-    pca = sklearn.decomposition.PCA(n_components=4)
+    # pca = sklearn.decomposition.PCA(n_components=4)
 
     # fit pca model
     # pca.fit(datasets.loc[:, [column for column in datasets.columns
@@ -249,7 +251,7 @@ def main(input_path: str, output_path: str):
 
         # loop over the groups
         for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=2, max_fog_event_length=33,
-                                          first_vrv=True):
+                                          first_rvr=True):
 
             # get sequences
             sequences = extract_sequences(fog_event, fog_events_df=fog_events_reduced,
@@ -260,8 +262,8 @@ def main(input_path: str, output_path: str):
             # get y labels
             labels.append(extract_labels(fog_event, input_path))
 
-            # get first vrv
-            vrv.append(get_first_rvr(fog_event, input_path))
+            # get first rvr
+            rvr.append(get_first_rvr(fog_event, input_path))
             # get exogen values
             exogen_values.append(get_exogen_values(fog_event))
 
@@ -274,23 +276,23 @@ def main(input_path: str, output_path: str):
     # add labels to dataset
     datasets_features.loc[:, 'y'] = labels
 
-    # add vrv to dataset
-    datasets_features.loc[:, 'vrv'] = vrv
+    # add rvr to dataset
+    datasets_features.loc[:, 'rvr'] = rvr
     # join exogen and features
     # datasets_features = pandas.concat([datasets_features, dataset_exogen], axis=1)
     print(datasets_features.shape, dataset_exogen.shape)
     datasets_features = pandas.merge(datasets_features.reset_index(drop=True), dataset_exogen.reset_index(drop=True),
                                      left_index=True, right_index=True)
     # remove the mean
-    # datasets_features.loc[:, 'vrv'] = datasets_features['vrv'] - datasets_features['vrv'].mean()
+    # datasets_features.loc[:, 'rvr'] = datasets_features['rvr'] - datasets_features['rvr'].mean()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
     datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
 
     coef_df = linear_features(datasets_sequences, 'id', 'time')
     coef_df.loc[:, 'y'] = labels
-    coef_df.loc[:, 'vrv'] = vrv
-    coef_df.loc[:, 'vrv'] = coef_df['vrv'] - coef_df['vrv'].mean()
+    coef_df.loc[:, 'rvr'] = rvr
+    coef_df.loc[:, 'rvr'] = coef_df['rvr'] - coef_df['rvr'].mean()
     # coef_df.to_csv(output_path + 'coef.csv', sep=';', index=False)
     # datasets_features.loc[:, '0_coef'] = coef_df[0]
     # datasets_features.loc[:, '1_coef'] = coef_df[1]
@@ -310,7 +312,7 @@ def main(input_path: str, output_path: str):
     print(datasets_features.shape, dataset_exogen.shape)
     # datasets_sequences.to_csv(output_path + 'features.csv', sep=';', index=False)
     dataset_exogen.loc[:, 'y'] = labels
-    dataset_exogen.loc[:, 'rvr'] = vrv
+    dataset_exogen.loc[:, 'rvr'] = rvr
     dataset_exogen.to_csv(output_path + 'features.csv', sep=';', index=False)
 
 
