@@ -154,6 +154,7 @@ def id_generator() -> Iterator[int]:
         yield id
         id += 1
 
+
 def linear_features(df: pandas.DataFrame, column_id: str, column_sort: str) -> pandas.DataFrame:
     """
     Gets linear regression coefficients
@@ -175,14 +176,13 @@ def linear_features(df: pandas.DataFrame, column_id: str, column_sort: str) -> p
     return pandas.DataFrame.from_dict(results, orient='index')
 
 
-
 def extract_characteristics_from_sequences(df: pandas.DataFrame, settings) -> pandas.DataFrame:
     """
-
+    Extract time series charateristics from the input dataframe
     """
     # TODO reduce extracted features, see impute or features dict
     extracted_features = tsfresh.extract_features(df, column_id='id', column_sort='time',
-                                                   default_fc_parameters=settings)
+                                                  default_fc_parameters=settings)
     tsfresh.utilities.dataframe_functions.impute(extracted_features)
     return extracted_features
 
@@ -216,6 +216,7 @@ def main(input_path: str, output_path: str):
     # settings = tsfresh.feature_extraction.settings.ComprehensiveFCParameters()
     # settings = tsfresh.feature_extraction.settings.EfficientFCParameters()
     mat = src.utils.commons.read_mat(input_path)
+    data_id = src.utils.commons.get_mat_data_key(mat)
     # datasets = src.utils.commons.concat_dataset(mat)
     # TODO generate a representative sample
     # pca = sklearn.decomposition.PCA(n_components=4)
@@ -226,7 +227,7 @@ def main(input_path: str, output_path: str):
 
     # loop over the datasets
     for dataset in src.utils.commons.dataset_generator(mat):
-        dataset_with_fog_events = identify_log_events(dataset, input_path)
+        dataset_with_fog_events = identify_log_events(dataset)
 
         # apply pca
         # fog_events_reduced = pandas.DataFrame(pca.transform(dataset_with_fog_events.loc[:,
@@ -246,39 +247,40 @@ def main(input_path: str, output_path: str):
             all_sequences.append(sequences)
 
             # get y labels
-            labels.append(extract_labels(fog_event, input_path))
+            labels.append(extract_labels(fog_event))
 
             # get first rvr
-            rvr.append(get_first_rvr(fog_event, input_path))
+            rvr.append(get_first_rvr(fog_event))
+
             # get exogen values
             exogen_values.append(get_exogen_values(fog_event))
 
     # generate a single DataFrame with all the sequences
-    datasets_sequences = pandas.concat(all_sequences, ignore_index=False)
+    # datasets_sequences = pandas.concat(all_sequences, ignore_index=False)
     # extract features
-    datasets_features = extract_characteristics_from_sequences(datasets_sequences.dropna(), settings=settings)
+    # datasets_features = extract_characteristics_from_sequences(datasets_sequences.dropna(), settings=settings)
     dataset_exogen = pandas.concat(exogen_values, ignore_index=False)
     dataset_exogen.to_csv(output_path + 'exogen.csv', sep=';', index=False)
     # add labels to dataset
-    datasets_features.loc[:, 'y'] = labels
+    # datasets_features.loc[:, 'y'] = labels
 
     # add rvr to dataset
-    datasets_features.loc[:, 'rvr'] = rvr
+    # datasets_features.loc[:, 'rvr'] = rvr
     # join exogen and features
     # datasets_features = pandas.concat([datasets_features, dataset_exogen], axis=1)
-    print(datasets_features.shape, dataset_exogen.shape)
-    datasets_features = pandas.merge(datasets_features.reset_index(drop=True), dataset_exogen.reset_index(drop=True),
-                                     left_index=True, right_index=True)
+    # print(datasets_features.shape, dataset_exogen.shape)
+    # datasets_features = pandas.merge(datasets_features.reset_index(drop=True), dataset_exogen.reset_index(drop=True),
+    #                                  left_index=True, right_index=True)
     # remove the mean
     # datasets_features.loc[:, 'rvr'] = datasets_features['rvr'] - datasets_features['rvr'].mean()
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
+    # datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
 
-    coef_df = linear_features(datasets_sequences, 'id', 'time')
-    coef_df.loc[:, 'y'] = labels
-    coef_df.loc[:, 'rvr'] = rvr
-    coef_df.loc[:, 'rvr'] = coef_df['rvr'] - coef_df['rvr'].mean()
+    # coef_df = linear_features(datasets_sequences, 'id', 'time')
+    # coef_df.loc[:, 'y'] = labels
+    # coef_df.loc[:, 'rvr'] = rvr
+    # coef_df.loc[:, 'rvr'] = coef_df['rvr'] - coef_df['rvr'].mean()
     # coef_df.to_csv(output_path + 'coef.csv', sep=';', index=False)
     # datasets_features.loc[:, '0_coef'] = coef_df[0]
     # datasets_features.loc[:, '1_coef'] = coef_df[1]
@@ -286,7 +288,7 @@ def main(input_path: str, output_path: str):
     # datasets_features.loc[:, '3_coef'] = coef_df[3]
 
     # extract last value from sequences
-    last_values = datasets_sequences.groupby('id').tail(1).iloc[:, :-2].reset_index(drop=True)
+    # last_values = datasets_sequences.groupby('id').tail(1).iloc[:, :-2].reset_index(drop=True)
     # print(datasets_sequences.columns)
     # print(last_values.shape)
     # print(datasets_features.shape)
@@ -294,12 +296,12 @@ def main(input_path: str, output_path: str):
     # datasets_features.loc[:, '1_23last'] = last_values.iloc[:, 1]
     # datasets_features.loc[:, '2_23last'] = last_values.iloc[:, 2]
     # datasets_features.loc[:, '3_23last'] = last_values.iloc[:, 3]
-    datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
-    print(datasets_features.shape, dataset_exogen.shape)
+    # datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
+    # print(datasets_features.shape, dataset_exogen.shape)
     # datasets_sequences.to_csv(output_path + 'features.csv', sep=';', index=False)
     dataset_exogen.loc[:, 'y'] = labels
     dataset_exogen.loc[:, 'rvr'] = rvr
-    dataset_exogen.to_csv(output_path + 'features.csv', sep=';', index=False)
+    dataset_exogen.to_csv(output_path + data_id + '_features.csv', sep=';', index=False)
 
 
 if __name__ == '__main__':
