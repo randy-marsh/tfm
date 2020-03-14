@@ -15,15 +15,15 @@ import src.utils.commons
 
 def identify_log_events(df: pandas.DataFrame) -> pandas.DataFrame:
     """
-    Given an input DataFrame identify the fog by hour frequencies, it asumes that the input dataframe is
-    sorted by time and has a column called 'rvr'
-    :param pandas.DataFrame df: input DataFrame it rvr values
-    :return pandas.DataFrame df: DataFrame with an extra column 'groups' with the fog-events labeled
+    Given an input DataFrame
     """
     # do this to avoid modifying the original dataframe
     df = df.copy(deep=True)
 
-    # loc values with fog column rvr
+    # loc values with fog column rvridentify the fog by hour frequencies, it asumes that the input dataframe is
+    #     sorted by time and has a column called 'rvr'
+    #     :param pandas.DataFrame df: input DataFrame it rvr values
+    #     :return pandas.DataFrame df: DataFrame with an extra column 'groups' with the fog-events labeled
     df.loc[:, 'fog'] = (df['rvr'] < 2000).astype(int)
 
     # create a dummy timestamp
@@ -48,6 +48,7 @@ def is_rvr_min_at_first_fog_event(df: pandas.DataFrame) -> pandas.DataFrame:
         return False
     else:
         return True
+
 
 def get_fog_events(df: pandas.DataFrame) -> List:
     """
@@ -158,6 +159,10 @@ def id_generator() -> Iterator[int]:
 def linear_features(df: pandas.DataFrame, column_id: str, column_sort: str) -> pandas.DataFrame:
     """
     Gets linear regression coefficients
+    :param pandas.DataFrame df: input dataframe
+    :param str column_id: column to identify events
+    :param str column_sort: column to sort events
+    :return pandas.Dataframe: a dataframe with a column for each coefficient
     """
     # TODO R wen not enough samples
     groups = df.groupby(column_id)
@@ -165,15 +170,17 @@ def linear_features(df: pandas.DataFrame, column_id: str, column_sort: str) -> p
     results = dict()
     for name, group in groups:
         columns = [column for column in group.columns if column not in [column_id, column_sort]]
-        group.dropna(inplace=True)
-        y = group[column_sort]
+        clean = group.dropna()
+        y = clean[column_sort]
         coefs = []
         for column in columns:
-            X = group[column]
+            X = clean[column]
             lr.fit(X.values.reshape(-1, 1), y)
             coefs.append(lr.coef_[0])
         results[name] = coefs
-    return pandas.DataFrame.from_dict(results, orient='index')
+    # rename columns
+    columns_renamed = ['coef_' + str(column) for column in df.columns if column not in [column_id, column_sort]]
+    return pandas.DataFrame.from_dict(results, orient='index', columns=columns_renamed)
 
 
 def extract_characteristics_from_sequences(df: pandas.DataFrame, settings) -> pandas.DataFrame:
@@ -256,7 +263,7 @@ def main(input_path: str, output_path: str):
             exogen_values.append(get_exogen_values(fog_event))
 
     # generate a single DataFrame with all the sequences
-    # datasets_sequences = pandas.concat(all_sequences, ignore_index=False)
+    datasets_sequences = pandas.concat(all_sequences, ignore_index=False)
     # extract features
     # datasets_features = extract_characteristics_from_sequences(datasets_sequences.dropna(), settings=settings)
     dataset_exogen = pandas.concat(exogen_values, ignore_index=False)
@@ -277,11 +284,11 @@ def main(input_path: str, output_path: str):
         os.makedirs(output_path)
     # datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
 
-    # coef_df = linear_features(datasets_sequences, 'id', 'time')
+    coef_df = linear_features(datasets_sequences, 'id', 'time')
     # coef_df.loc[:, 'y'] = labels
     # coef_df.loc[:, 'rvr'] = rvr
     # coef_df.loc[:, 'rvr'] = coef_df['rvr'] - coef_df['rvr'].mean()
-    # coef_df.to_csv(output_path + 'coef.csv', sep=';', index=False)
+    coef_df.to_csv(output_path + data_id + '_coef.csv', sep=';', index=False)
     # datasets_features.loc[:, '0_coef'] = coef_df[0]
     # datasets_features.loc[:, '1_coef'] = coef_df[1]
     # datasets_features.loc[:, '2_coef'] = coef_df[2]
