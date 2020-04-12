@@ -284,7 +284,8 @@ def main(input_path: str, output_path: str):
         os.makedirs(output_path)
     # datasets_features.to_csv(output_path + 'features.csv', sep=';', index=False)
 
-    coef_df = linear_features(datasets_sequences, 'id', 'time')
+    coef_df = linear_features(datasets_sequences.loc[:, [column for column in datasets_sequences.columns
+                                                         if 'rvr' != column]], 'id', 'time')
     # coef_df.loc[:, 'y'] = labels
     # coef_df.loc[:, 'rvr'] = rvr
     # coef_df.loc[:, 'rvr'] = coef_df['rvr'] - coef_df['rvr'].mean()
