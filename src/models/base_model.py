@@ -18,10 +18,10 @@ def rmse(y_true: numpy.ndarray, y_pred: numpy.ndarray) -> float:
 class BaseModel(abc.ABC):
 
     def __init__(self, X: numpy.ndarray, y: numpy.ndarray, cv: int) -> None:
-        if X.shape[1] == 1:
+
+        self._X = X
+        if X.ndim == 1:
             self._X = X.reshape(-1, 1)
-        else:
-            self._X = X
         self._y = y
         self._cv = cv
         self._scoring = {'root mean squared error': sklearn.metrics.make_scorer(rmse),
@@ -29,17 +29,21 @@ class BaseModel(abc.ABC):
                          'mean squared error': 'neg_mean_squared_error',
                          'coefficient of determination': 'r2',
                          }
-        pass
 
     @property
     @abc.abstractmethod
     def estimator(self):
         pass
 
-    def scores(self):
-        sklearn.model_selection.cross_validate(estimator=self.estimator, X=self.X, y=self.y, cv=self.cv,
-                                               scoring=self.scoring)
+    @property
+    @abc.abstractmethod
+    def estimator_name(self):
         pass
+
+    def scores(self):
+        scores = sklearn.model_selection.cross_validate(estimator=self.estimator, X=self.X, y=self.y, cv=self.cv,
+                                                        scoring=self.scoring)
+        return scores
 
     @property
     def X(self) -> numpy.ndarray:

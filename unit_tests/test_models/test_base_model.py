@@ -1,11 +1,13 @@
 import unittest
-import  numpy
+import numpy
 import src.models.base_model
 
 def remove_abstract_methods_from_class(cls: 'A class'):
     cls_without_abstract_methods = cls
     cls_without_abstract_methods.__abstractmethods__ = set()
     return cls_without_abstract_methods
+
+
 class TestRmse(unittest.TestCase):
 
     def test_that_rmse_computes_root_mean_squared_error(self):
