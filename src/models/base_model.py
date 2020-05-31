@@ -4,7 +4,8 @@ import numpy
 import typing
 import sklearn.metrics
 import abc
-
+import os.path
+import pandas
 
 def rmse(y_true: numpy.ndarray, y_pred: numpy.ndarray) -> float:
     """
@@ -14,6 +15,7 @@ def rmse(y_true: numpy.ndarray, y_pred: numpy.ndarray) -> float:
     :return float: root mean squared error
     """
     return numpy.sqrt(sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred))
+
 
 class BaseModel(abc.ABC):
 
@@ -40,10 +42,29 @@ class BaseModel(abc.ABC):
     def estimator_name(self):
         pass
 
-    def scores(self):
+    def make_scores(self):
         scores = sklearn.model_selection.cross_validate(estimator=self.estimator, X=self.X, y=self.y, cv=self.cv,
                                                         scoring=self.scoring)
-        return scores
+        self._scores = scores
+
+    def to_csv(self, path: str, sep: str = ';'):
+        data_dict = {'Model': [self.estimator_name],
+                     'root mean squared error': [self.scores['test_root mean squared error'].mean()],
+                     'mean absolute error': [self.scores['test_mean absolute error'].mean()],
+                     'mean squared error': [self.scores['test_mean squared error'].mean()],
+                     'coefficient of determination': [self.scores['test_coefficient of determination'].mean()],
+                     }
+        df = pandas.DataFrame(data=data_dict)
+        if os.path.isfile(path):
+            df.to_csv(path_or_buf=path, sep=sep, mode='a', header=False, index=False)
+        else:
+            df.to_csv(path_or_buf=path, sep=sep, index=False)
+
+    def __str__(self):
+        return (f"""{self.estimator_name}, root mean squared error: {self.scores['test_root mean squared error'].mean()}, """
+                f"""mean absolute error: {self.scores['test_mean absolute error'].mean()}, """
+                f"""mean squared error: {self.scores['test_mean squared error'].mean()}, """
+                f"""coefficient of determination: {self.scores['test_coefficient of determination'].mean()}""")
 
     @property
     def X(self) -> numpy.ndarray:
@@ -61,4 +82,11 @@ class BaseModel(abc.ABC):
     def scoring(self) -> typing.Dict:
         return self._scoring
 
+    @property
+    def scores(self) -> typing.Dict:
+        try:
+            return self._scores
+        except AttributeError:
+            self.make_scores()
+            return self._scores
 

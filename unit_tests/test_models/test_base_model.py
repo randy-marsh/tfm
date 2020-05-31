@@ -1,5 +1,9 @@
 import unittest
 import numpy
+import pandas
+import tempfile
+import sklearn.linear_model
+
 import src.models.base_model
 
 def remove_abstract_methods_from_class(cls: 'A class'):
@@ -7,6 +11,16 @@ def remove_abstract_methods_from_class(cls: 'A class'):
     cls_without_abstract_methods.__abstractmethods__ = set()
     return cls_without_abstract_methods
 
+
+class DummyRegressor(src.models.base_model.BaseModel):
+
+    @property
+    def estimator(self):
+        return sklearn.linear_model.LinearRegression()
+
+    @property
+    def estimator_name(self):
+        return 'Dummyr Regression'
 
 class TestRmse(unittest.TestCase):
 
@@ -33,3 +47,41 @@ class TestBaseModelProperties(unittest.TestCase):
 
     def test_that_cv_can_be_read(self):
         self.assertEqual(self.base_model.cv, 10)
+
+    def test_that_scores_can_be_read(self):
+        self.assertTrue(self.base_model.scores)
+
+
+class TestToCsv(unittest.TestCase):
+
+    def setUp(self) -> None:
+        self.path = tempfile.TemporaryDirectory()
+
+        self.model = DummyRegressor(X=numpy.array([numpy.random.random() for i in range(100)]),
+                                    y=numpy.array([numpy.random.random() for i in range(100)]),
+                                    cv=10)
+
+    def tearDown(self) -> None:
+        self.path.cleanup()
+
+    def test_that_output_csv_has_correct_column_names(self):
+        self.model.to_csv(path=self.path.name + '\dummy.csv')
+        df = pandas.read_csv(self.path.name + '\dummy.csv', sep=';')
+        self.assertListEqual(sorted(df.columns.tolist()), sorted(['Model', 'root mean squared error',
+                                                                  'mean absolute error', 'mean squared error',
+                                                                  'coefficient of determination']))
+
+    def test_that_if_file_exists_then_appends_only_one_row(self):
+        self.model.to_csv(path=self.path.name + '\dummy.csv')
+        df = pandas.read_csv(self.path.name + '\dummy.csv', sep=';')
+        rows_before = df.shape[0]
+        self.model.to_csv(path=self.path.name + '\dummy.csv')
+        df = pandas.read_csv(self.path.name + '\dummy.csv', sep=';')
+        rows_after = df.shape[0]
+        self.assertEqual(rows_before + 1, rows_after)
+
+    def test_that_if_file_does_not_exists_then_adds_one_row(self):
+        self.model.to_csv(path=self.path.name + '\dummy.csv')
+        df = pandas.read_csv(self.path.name + '\dummy.csv', sep=';')
+        rows = df.shape[0]
+        self.assertEqual(rows, 1)
