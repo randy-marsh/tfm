@@ -6,7 +6,7 @@ import src.models.lasso_regressor
 class TestLassoRegressorProperties(unittest.TestCase):
 
     def setUp(self) -> None:
-        self.model = src.models.lasso_regressor.RidgeRegressor(X=numpy.array([[1, 2, 3], [4, 5, 6]]),
+        self.model = src.models.lasso_regressor.LassoRegressor(X=numpy.array([[1, 2, 3], [4, 5, 6]]),
                                                                y=numpy.array([0, 1, 0]), cv=10)
 
     def test_that_X_can_be_read(self):

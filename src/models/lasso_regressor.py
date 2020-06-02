@@ -2,7 +2,7 @@ import sklearn.linear_model
 import src.models.base_model
 
 
-class RidgeRegressor(src.models.base_model.BaseModel):
+class LassoRegressor(src.models.base_model.BaseModel):
 
     @property
     def estimator(self):
