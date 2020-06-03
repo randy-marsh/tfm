@@ -77,5 +77,28 @@ def standarize_dataset(df: pandas.DataFrame, origin: str) -> pandas.DataFrame:
     return df
 
 
+def identify_log_events(df: pandas.DataFrame) -> pandas.DataFrame:
+    """
+    Given an input DataFrame
+    """
+    # do this to avoid modifying the original dataframe
+    df = df.copy(deep=True)
+
+    # loc values with fog column rvridentify the fog by hour frequencies, it asumes that the input dataframe is
+    #     sorted by time and has a column called 'rvr'
+    #     :param pandas.DataFrame df: input DataFrame it rvr values
+    #     :return pandas.DataFrame df: DataFrame with an extra column 'groups' with the fog-events labeled
+    df.loc[:, 'fog'] = (df['rvr'] < 2000).astype(int)
+
+    # create a dummy timestamp
+    df.loc[:, 'time'] = df.index
+
+    # identify consecutive fog events and generates a unique label
+    df.loc[:, 'groups'] = df.loc[df['fog'] == 1, 'time'].diff().ge(1.5).cumsum()
+    # TODO think about return just a series rather than a whole dataframe or part of it
+    # return everything but time vars
+    return df.loc[:, [column for column in df.columns if column not in ['fog', 'time']]]
+
+
 
 
