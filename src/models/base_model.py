@@ -7,6 +7,7 @@ import abc
 import os.path
 import pandas
 
+
 def rmse(y_true: numpy.ndarray, y_pred: numpy.ndarray) -> float:
     """
     Root mean squared error
@@ -19,7 +20,7 @@ def rmse(y_true: numpy.ndarray, y_pred: numpy.ndarray) -> float:
 
 class BaseModel(abc.ABC):
 
-    def __init__(self, X: numpy.ndarray, y: numpy.ndarray, cv: int) -> None:
+    def __init__(self, X: numpy.ndarray, y: numpy.ndarray, cv: int = 10) -> None:
 
         self._X = X
         if X.ndim == 1:
@@ -44,7 +45,7 @@ class BaseModel(abc.ABC):
 
     def make_scores(self):
         scores = sklearn.model_selection.cross_validate(estimator=self.estimator, X=self.X, y=self.y, cv=self.cv,
-                                                        scoring=self.scoring)
+                                                        scoring=self.scoring, n_jobs=-1)
         self._scores = scores
 
     def to_csv(self, path: str, sep: str = ';'):
