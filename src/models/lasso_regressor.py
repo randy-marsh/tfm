@@ -7,8 +7,14 @@ class LassoRegressor(src.models.base_model.BaseModel):
 
     @property
     def estimator(self):
-        config = configparser.ConfigParser().read('lasso.cfg')
-        return sklearn.linear_model.Lasso(alpha=config.getfloat('DEFAULT', 'alpha'))
+        try:
+            config = configparser.RawConfigParser()
+            config.read('lasso.cfg')
+            return sklearn.linear_model.Lasso(alpha=config.getfloat('DEFAULT', 'alpha'))
+        
+        except configparser.NoOptionError or FileNotFoundError:
+            # TODO warning or logging
+            return sklearn.linear_model.Ridge()
 
     @property
     def estimator_name(self):
