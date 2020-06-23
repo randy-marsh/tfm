@@ -7,10 +7,16 @@ class ElasticNetRegressor(src.models.base_model.BaseModel):
 
     @property
     def estimator(self):
-        config = configparser.ConfigParser().read('elastic_net.cfg')
-        alpha = config.getfloat('DEFAULT', 'alpha')
-        l1_ratio = config.getfloat('DEFAULT', 'l1_ratio')
-        return sklearn.linear_model.ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
+        try:
+            config = configparser.RawConfigParser()
+            config.read('elastic_net.cfg')
+            alpha = config.getfloat('DEFAULT', 'alpha')
+            l1_ratio = config.getfloat('DEFAULT', 'l1_ratio')
+            return sklearn.linear_model.ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
+        
+        except configparser.NoOptionError or FileNotFoundError:
+            # TODO warning or logging
+            return sklearn.linear_model.ElasticNet()
 
     @property
     def estimator_name(self):
