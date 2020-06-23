@@ -1,6 +1,6 @@
 import pandas
 import scipy.io
-
+import typing
 from typing import Dict
 
 
@@ -77,7 +77,7 @@ def standarize_dataset(df: pandas.DataFrame, origin: str) -> pandas.DataFrame:
     return df
 
 
-def identify_log_events(df: pandas.DataFrame) -> pandas.DataFrame:
+def identify_fog_events(df: pandas.DataFrame) -> pandas.DataFrame:
     """
     Given an input DataFrame
     """
@@ -98,6 +98,24 @@ def identify_log_events(df: pandas.DataFrame) -> pandas.DataFrame:
     # TODO think about return just a series rather than a whole dataframe or part of it
     # return everything but time vars
     return df.loc[:, [column for column in df.columns if column not in ['fog', 'time']]]
+
+def load_features(input_data: str ) -> typing.Tuple:
+    """
+    Load data and normalize it
+    :param str input_data: input data path
+
+    :return: tuple containing (X, y)
+    """
+
+    dataset = pandas.read_csv(input_data, sep=';')
+
+    X = dataset.loc[:, [column for column in dataset.columns if column not in ['id', 'y']]]
+    y = dataset['y'].values
+
+    # Normalize features
+    X = sklearn.preprocessing.scale(X)
+    return X, y
+
 
 
 
