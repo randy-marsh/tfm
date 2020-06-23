@@ -7,7 +7,6 @@ class RidgeRegressor(src.models.base_model.BaseModel):
 
     @property
     def estimator(self):
-        # TODO add alpha from config file
         config = configparser.ConfigParser().read('ridge.cfg')
         return sklearn.linear_model.Ridge(alpha=config.getfloat('DEFAULT', 'alpha'))
 
