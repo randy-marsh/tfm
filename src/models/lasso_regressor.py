@@ -11,10 +11,10 @@ class LassoRegressor(src.models.base_model.BaseModel):
             config = configparser.RawConfigParser()
             config.read('lasso.cfg')
             return sklearn.linear_model.Lasso(alpha=config.getfloat('DEFAULT', 'alpha'))
-        
+
         except configparser.NoOptionError or FileNotFoundError:
             # TODO warning or logging
-            return sklearn.linear_model.Ridge()
+            return sklearn.linear_model.Lasso()
 
     @property
     def estimator_name(self):
