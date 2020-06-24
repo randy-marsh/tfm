@@ -17,6 +17,7 @@ class SVRRegressor(src.models.base_model.BaseModel):
         except configparser.NoOptionError or FileNotFoundError:
             # TODO warning or logging
             return sklearn.svm.SVR()
+        
     @property
     def estimator_name(self):
         return 'SVR Regression'
