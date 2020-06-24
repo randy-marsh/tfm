@@ -1,5 +1,6 @@
 import sklearn.linear_model
 import sklearn.model_selection
+import sklearn.metrics
 import numpy
 import typing
 import sklearn.metrics
@@ -28,8 +29,10 @@ class BaseModel(abc.ABC):
         self._y = y
         self._cv = cv
         self._scoring = {'root mean squared error': sklearn.metrics.make_scorer(rmse),
-                         'mean absolute error': 'neg_mean_absolute_error',
-                         'mean squared error': 'neg_mean_squared_error',
+                         # 'mean absolute error': 'neg_mean_absolute_error',
+                         'mean absolute error': sklearn.metrics.make_scorer(sklearn.metrics.mean_absolute_error),
+                         # 'mean squared error': 'neg_mean_squared_error',
+                         'mean squared error': sklearn.metrics.make_scorer(sklearn.metrics.mean_squared_error),
                          'coefficient of determination': 'r2',
                          }
 
