@@ -29,7 +29,8 @@ def threshold_accuracy(y_true: numpy.ndarray, y_pred: numpy.ndarray, thr: float 
     """
     y_true_thr = numpy.where(y_true <= thr, 1, 0)
     y_pred_thr = numpy.where(y_pred <= thr, 1, 0)
-    return sklearn.metrics.accuracy_score(y_true=y_true_thr, y_pred=y_pred_thr)
+    # return sklearn.metrics.accuracy_score(y_true=y_true_thr, y_pred=y_pred_thr)
+    return sklearn.metrics.balanced_accuracy_score(y_true=y_true_thr, y_pred=y_pred_thr)
 
 
 class BaseModel(abc.ABC):
