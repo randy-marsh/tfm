@@ -13,8 +13,16 @@ class ElasticNetRegressor(src.models.base_model.BaseModel):
             alpha = config.getfloat('DEFAULT', 'alpha')
             l1_ratio = config.getfloat('DEFAULT', 'l1_ratio')
             return sklearn.linear_model.ElasticNet(alpha=alpha, l1_ratio=l1_ratio)
-        
-        except configparser.NoOptionError or FileNotFoundError:
+
+        except configparser.NoOptionError:
+            # TODO warning or logging
+            return sklearn.linear_model.ElasticNet()
+
+        except FileNotFoundError:
+            # TODO warning or logging
+            return sklearn.linear_model.ElasticNet()
+
+        except configparser.MissingSectionHeaderError:
             # TODO warning or logging
             return sklearn.linear_model.ElasticNet()
 

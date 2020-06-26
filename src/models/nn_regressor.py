@@ -7,7 +7,6 @@ class NNRegressor(src.models.base_model.BaseModel):
     @property
     def estimator(self):
         try:
-            #TODO there is a bug
             config = configparser.RawConfigParser()
             config.read('nn.cfg')
             alpha = config.getfloat('DEFAULT', 'alpha')
@@ -16,7 +15,16 @@ class NNRegressor(src.models.base_model.BaseModel):
             early_stopping = config.getboolean('DEFAULT', 'early_stopping')
             return sklearn.neural_network.MLPRegressor(alpha=alpha, hidden_layer_sizes=hidden_layer_sizes, max_iter=500000,
                                                        solver=solver, early_stopping=early_stopping)
-        except configparser.NoOptionError or FileNotFoundError:
+
+        except configparser.NoOptionError:
+            # TODO warning or logging
+            return sklearn.neural_network.MLPRegressor()
+
+        except FileNotFoundError:
+            # TODO warning or logging
+            return sklearn.neural_network.MLPRegressor()
+
+        except configparser.MissingSectionHeaderError:
             # TODO warning or logging
             return sklearn.neural_network.MLPRegressor()
 

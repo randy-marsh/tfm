@@ -14,10 +14,19 @@ class SVRRegressor(src.models.base_model.BaseModel):
             C = config.getfloat('DEFAULT', 'C')
             epsilon = config.getfloat('DEFAULT', 'epsilon')
             return sklearn.svm.SVR(kernel=kernel, C=C, epsilon=epsilon)
-        except configparser.NoOptionError or FileNotFoundError:
+
+        except configparser.NoOptionError:
             # TODO warning or logging
             return sklearn.svm.SVR()
-        
+
+        except FileNotFoundError:
+            # TODO warning or logging
+            return sklearn.svm.SVR()
+
+        except configparser.MissingSectionHeaderError:
+            # TODO warning or logging
+            return sklearn.svm.SVR()
+
     @property
     def estimator_name(self):
         return 'SVR Regression'

@@ -11,7 +11,16 @@ class KNNRegressor(src.models.base_model.BaseModel):
             config = configparser.RawConfigParser()
             config.read('knn.cfg')
             return sklearn.neighbors.KNeighborsRegressor(n_neighbors=config.getint('DEFAULT', 'n_neighbors'))
-        except configparser.NoOptionError or FileNotFoundError:
+
+        except configparser.NoOptionError:
+            # TODO warning or logging
+            return sklearn.neighbors.KNeighborsRegressor()
+
+        except FileNotFoundError:
+            # TODO warning or logging
+            return sklearn.neighbors.KNeighborsRegressor()
+
+        except configparser.MissingSectionHeaderError:
             # TODO warning or logging
             return sklearn.neighbors.KNeighborsRegressor()
 

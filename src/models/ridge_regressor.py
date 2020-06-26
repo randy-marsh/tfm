@@ -11,7 +11,16 @@ class RidgeRegressor(src.models.base_model.BaseModel):
             config = configparser.RawConfigParser()
             config.read('ridge.cfg')
             return sklearn.linear_model.Ridge(alpha=config.getfloat('DEFAULT', 'alpha'))
-        except configparser.NoOptionError or FileNotFoundError:
+
+        except configparser.NoOptionError:
+            # TODO warning or logging
+            return sklearn.linear_model.Ridge()
+
+        except configparser.MissingSectionHeaderError:
+            # TODO warning or logging
+            return sklearn.linear_model.Ridge()
+
+        except FileNotFoundError:
             # TODO warning or logging
             return sklearn.linear_model.Ridge()
 

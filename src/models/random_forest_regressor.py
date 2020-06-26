@@ -13,10 +13,18 @@ class RandomForestRegressor(src.models.base_model.BaseModel):
             n_estimators = config.getint('DEFAULT', 'n_estimators')
             max_depth = config.getint('DEFAULT', 'max_depth')
             return sklearn.ensemble.RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth)
-        except configparser.NoOptionError or FileNotFoundError:
+
+        except configparser.NoOptionError:
             # TODO warning or logging
             return sklearn.ensemble.RandomForestRegressor()
 
+        except FileNotFoundError:
+            # TODO warning or logging
+            return sklearn.ensemble.RandomForestRegressor()
+
+        except configparser.MissingSectionHeaderError:
+            # TODO warning or logging
+            return sklearn.ensemble.RandomForestRegressor()
 
     @property
     def estimator_name(self):
