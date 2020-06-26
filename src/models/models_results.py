@@ -61,7 +61,8 @@ def main(input_data: str, output_file: str) -> None:
 
     for model in models:
         model.to_csv(path=output_file)
-
+    with pandas.option_context('display.max_rows', None, 'display.max_columns', None):  # more options can be specified also
+        print(pandas.read_csv(output_file, sep=';'))
 
 if __name__ == '__main__':
     args = parse_args()
