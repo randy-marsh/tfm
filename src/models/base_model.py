@@ -19,6 +19,19 @@ def rmse(y_true: numpy.ndarray, y_pred: numpy.ndarray) -> float:
     return numpy.sqrt(sklearn.metrics.mean_squared_error(y_true=y_true, y_pred=y_pred))
 
 
+def threshold_accuracy_1000(y_true: numpy.ndarray, y_pred: numpy.ndarray) -> float:
+    """
+    Umbralizes the input given a threshold and compute the accuracy
+    :param numpy.ndarray y_true: Ground truth (correct) target values.
+    :param numpy.ndarray y_pred: Estimated target values.
+    :return float: accuracy estimation
+    """
+    threshold = 1000
+    y_true_thr = numpy.where(y_true <= threshold, 1, 0)
+    y_pred_thr = numpy.where(y_pred <= threshold, 1, 0)
+    return sklearn.metrics.accuracy_score(y_true=y_true_thr, y_pred=y_pred_thr)
+
+
 class BaseModel(abc.ABC):
 
     def __init__(self, X: numpy.ndarray, y: numpy.ndarray, cv: int = 10) -> None:

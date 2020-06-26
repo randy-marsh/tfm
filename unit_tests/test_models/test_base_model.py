@@ -85,3 +85,33 @@ class TestToCsv(unittest.TestCase):
         df = pandas.read_csv(self.path.name + '\dummy.csv', sep=';')
         rows = df.shape[0]
         self.assertEqual(rows, 1)
+
+
+class TestThresholdAccuracy1000(unittest.TestCase):
+
+    def test_that_if_all_values_are_greater_than_1000_then_output_is_one(self):
+        y_pred = numpy.array([2000, 2000, 2000, 2000])
+        y_true = numpy.array([2000, 2000, 2000, 2000])
+        self.assertEqual(1, src.models.base_model.threshold_accuracy_1000(y_true=y_true, y_pred=y_pred))
+
+    def test_that_if_y_pred_are_less_than_1000_and_y_true_is_grater_than_1000_then_output_is_zero(self):
+        y_pred = numpy.array([1, 1, 1, 1])
+        y_true = numpy.array([2000, 2000, 2000, 2000])
+        self.assertEqual(0, src.models.base_model.threshold_accuracy_1000(y_true=y_true, y_pred=y_pred))
+
+    def test_that_if_y_true_are_less_than_1000_and_y_pred_is_grater_than_1000_then_output_is_zero(self):
+        y_true = numpy.array([1, 1, 1, 1])
+        y_pred = numpy.array([2000, 2000, 2000, 2000])
+        self.assertEqual(0, src.models.base_model.threshold_accuracy_1000(y_true=y_true, y_pred=y_pred))
+
+    def test_that_if_all_values_are_equal_than_1000_then_output_is_one(self):
+        y_pred = numpy.array([1000, 1000, 1000, 1000])
+        y_true = numpy.array([1000, 1000, 1000, 1000])
+        self.assertEqual(1, src.models.base_model.threshold_accuracy_1000(y_true=y_true, y_pred=y_pred))
+
+    def test_that_if_y_true_is_allways_1000_and_y_pred_is_greater_to_1000_50_percent_of_time_then_output_is_0_5(self):
+        y_pred = numpy.array([2000, 1, 2000, 1])
+        y_true = numpy.array([1000, 1000, 1000, 1000])
+        self.assertEqual(0.5, src.models.base_model.threshold_accuracy_1000(y_true=y_true, y_pred=y_pred))
+
+
