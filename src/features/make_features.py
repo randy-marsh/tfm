@@ -116,7 +116,7 @@ def extract_sequences(df: pandas.DataFrame, fog_events_df: pandas.DataFrame, win
 def extract_labels(df: pandas.DataFrame) -> float:
     """
     Get minimum RVR from input DataFrame
-    :param pandas.DataFrame df: input DataFrame should contain a column named 23
+    :param pandas.DataFrame df: input DataFrame should contain a column named rvr
     :return float: minimum RVR value
     """
     # y is the minimum RVR in the fog event
@@ -128,7 +128,7 @@ def extract_labels(df: pandas.DataFrame) -> float:
 def get_first_rvr(df: pandas.DataFrame) -> int:
     """
     Get first RVR from input DataFrame
-    :param pandas.DataFrame df: input DataFrame should contain a column named 23
+    :param pandas.DataFrame df: input DataFrame should contain a column named rvr
     :return int: first RVR value
     """
 
@@ -204,11 +204,13 @@ def parse_args() -> Dict:
                         default="../../data/raw/Grupos_totales_continua")
     parser.add_argument("-o", "--output_path", type=str, help="output path",
                         default="../../data/processed/")
+    parser.add_argument("-p", "--pca_preprocessing", type=bool, help="pca preproccesing",
+                        default=False)
     args = parser.parse_args()
     return vars(args)
 
 
-def main(input_path: str, output_path: str):
+def main(input_path: str, output_path: str, pca_preprocessing: bool):
     """
     read input path, transforms data and generates features
     """
@@ -224,28 +226,34 @@ def main(input_path: str, output_path: str):
     # settings = tsfresh.feature_extraction.settings.EfficientFCParameters()
     mat = src.utils.commons.read_mat(input_path)
     data_id = src.utils.commons.get_mat_data_key(mat)
-    # datasets = src.utils.commons.concat_dataset(mat)
-    # TODO generate a representative sample
-    # pca = sklearn.decomposition.PCA(n_components=4)
 
-    # fit pca model
-    # pca.fit(datasets.loc[:, [column for column in datasets.columns
-    #                          if column not in [0, 1, 23]]])
+    if pca_preprocessing:
+        datasets = src.utils.commons.concat_dataset(mat)
+        # TODO generate a representative sample
+        pca = sklearn.decomposition.PCA(n_components=4)
+
+        # fit pca model
+        pca.fit(datasets.loc[:, [column for column in datasets.columns
+                                 if column not in ['rvr']]])
 
     # loop over the datasets
     for dataset in src.utils.commons.dataset_generator(mat):
         dataset_with_fog_events = identify_log_events(dataset)
-
-        # apply pca
-        # fog_events_reduced = pandas.DataFrame(pca.transform(dataset_with_fog_events.loc[:,
-        #                                                     [column for column in dataset_with_fog_events.columns
-        #                                                      if column not in [23, 'time', 'id', 'groups']]]),
-        #                                       index=dataset_with_fog_events.index)
         fog_events_reduced = dataset_with_fog_events
 
         # loop over the groups
-        for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=2, max_fog_event_length=33,
+        for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=3, max_fog_event_length=33,
                                           first_rvr=True):
+
+            if pca_preprocessing:
+                fog_event_rvr = fog_event['rvr'].values
+                # apply pca
+                fog_event = pandas.DataFrame(pca.transform(fog_event.loc[:, [column for column in
+                                                                             fog_event.columns
+                                                                             if column not in['rvr']]]),
+                                             index=fog_event.index)
+                fog_event.loc[:, 'rvr'] = fog_event_rvr
+
 
             # get sequences
             sequences = extract_sequences(fog_event, fog_events_df=fog_events_reduced,
@@ -309,7 +317,10 @@ def main(input_path: str, output_path: str):
     # datasets_sequences.to_csv(output_path + 'features.csv', sep=';', index=False)
     dataset_exogen.loc[:, 'y'] = labels
     dataset_exogen.loc[:, 'rvr'] = rvr
-    dataset_exogen.to_csv(output_path + data_id + '_features.csv', sep=';', index=False)
+    if pca_preprocessing:
+        dataset_exogen.to_csv(output_path + data_id + '_pca_features.csv', sep=';', index=False)
+    else:
+        dataset_exogen.to_csv(output_path + data_id + '_features.csv', sep=';', index=False)
 
 
 if __name__ == '__main__':
