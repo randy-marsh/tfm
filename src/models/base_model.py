@@ -31,6 +31,7 @@ def threshold_accuracy(y_true: numpy.ndarray, y_pred: numpy.ndarray, thr: float 
     y_pred_thr = numpy.where(y_pred <= thr, 1, 0)
     return sklearn.metrics.accuracy_score(y_true=y_true_thr, y_pred=y_pred_thr)
 
+
 class BaseModel(abc.ABC):
 
     def __init__(self, X: numpy.ndarray, y: numpy.ndarray, cv: int = 10) -> None:
@@ -46,6 +47,9 @@ class BaseModel(abc.ABC):
                          # 'mean squared error': 'neg_mean_squared_error',
                          'mean squared error': sklearn.metrics.make_scorer(sklearn.metrics.mean_squared_error),
                          'coefficient of determination': 'r2',
+                         'thr_1000': sklearn.metrics.make_scorer(threshold_accuracy, thr=1000),
+                         'thr_550': sklearn.metrics.make_scorer(threshold_accuracy, thr=550),
+                         'thr_300': sklearn.metrics.make_scorer(threshold_accuracy, thr=300),
                          }
 
     @property
@@ -69,6 +73,9 @@ class BaseModel(abc.ABC):
                      'mean absolute error': [self.scores['test_mean absolute error'].mean()],
                      'mean squared error': [self.scores['test_mean squared error'].mean()],
                      'coefficient of determination': [self.scores['test_coefficient of determination'].mean()],
+                     'Threshold Accuracy 1000 m': [self.scores['test_thr_1000'].mean()],
+                     'Threshold Accuracy 550 m': [self.scores['test_thr_550'].mean()],
+                     'Threshold Accuracy 300 m': [self.scores['test_thr_300'].mean()],
                      }
         df = pandas.DataFrame(data=data_dict)
         if os.path.isfile(path):
@@ -80,7 +87,11 @@ class BaseModel(abc.ABC):
         return (f"""{self.estimator_name}, root mean squared error: {self.scores['test_root mean squared error'].mean()}, """
                 f"""mean absolute error: {self.scores['test_mean absolute error'].mean()}, """
                 f"""mean squared error: {self.scores['test_mean squared error'].mean()}, """
-                f"""coefficient of determination: {self.scores['test_coefficient of determination'].mean()}""")
+                f"""coefficient of determination: {self.scores['test_coefficient of determination'].mean()}"""
+                f"""Threshold Accuracy 1000 m: {self.scores['test_thr_1000'].mean()}"""
+                f"""Threshold Accuracy 550 m: {self.scores['test_thr_550'].mean()}"""
+                f"""Threshold Accuracy 300 m: {self.scores['test_thr_300'].mean()}"""
+                )
 
     @property
     def X(self) -> numpy.ndarray:
