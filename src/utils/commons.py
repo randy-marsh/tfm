@@ -20,12 +20,18 @@ def concat_dataset(mat: Dict) -> pandas.DataFrame:
     :param mat: mat object descriptor
     :return pandas.DataFrame: DataFrame containing all datasets
     """
-    # TODO reformat
+    data_key = get_mat_data_key(mat)
     datasets = list()
-    for idx, dataset in enumerate(range(mat['Grupos_totales_continua'].shape[1])):
-        df = pandas.DataFrame(mat['Grupos_totales_continua'][0][dataset])
-        datasets.append(df)
-    return pandas.concat(datasets, ignore_index=True)
+    if data_key == 'Grupos_totales_continua':
+        for dataset in range(mat[data_key].shape[1]):
+            df = pandas.DataFrame(mat[data_key][0][dataset])
+            df = standarize_dataset(df, data_key)
+            datasets.append(df)
+            return pandas.concat(datasets, ignore_index=True)
+    else:
+        df = pandas.DataFrame(mat[data_key])
+        df = standarize_dataset(df, data_key)
+        return df
 
 
 def dataset_generator(mat):
