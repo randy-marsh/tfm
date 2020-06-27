@@ -1,3 +1,4 @@
+import configparser
 import pandas
 import numpy
 import os
@@ -214,6 +215,20 @@ def main(input_path: str, output_path: str, pca_preprocessing: bool):
     """
     read input path, transforms data and generates features
     """
+    try:
+        # read configuration
+        config = configparser.RawConfigParser()
+        config.read('make_features.cfg')
+        min_fog_event_length = config.getint('DEFAULT', 'min_fog_event_length')
+        max_fog_event_length = config.getint('DEFAULT', 'max_fog_event_length')
+        first_rvr = config.getboolean('DEFAULT', 'first_rvr')
+        window_length = config.getint('DEFAULT', 'window_length')
+    except (configparser.NoOptionError, configparser.MissingSectionHeaderError, FileNotFoundError):
+        # TODO warning or logging
+        min_fog_event_length = 3
+        max_fog_event_length = 33
+        first_rvr = True
+        window_length = 10
     # generator used to iterate over the dataset
     generator = id_generator()
 
@@ -242,8 +257,8 @@ def main(input_path: str, output_path: str, pca_preprocessing: bool):
         fog_events_reduced = dataset_with_fog_events
 
         # loop over the groups
-        for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=3, max_fog_event_length=33,
-                                          first_rvr=True):
+        for fog_event in valid_fog_events(dataset_with_fog_events, min_fog_event_length=min_fog_event_length,
+                                          max_fog_event_length=max_fog_event_length, first_rvr=first_rvr):
 
             if pca_preprocessing:
                 fog_event_rvr = fog_event['rvr'].values
@@ -257,7 +272,7 @@ def main(input_path: str, output_path: str, pca_preprocessing: bool):
 
             # get sequences
             sequences = extract_sequences(fog_event, fog_events_df=fog_events_reduced,
-                                          window_length=10, id_generator=generator)
+                                          window_length=window_length, id_generator=generator)
 
             all_sequences.append(sequences)
 
